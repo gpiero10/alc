@@ -3,31 +3,25 @@ import matplotlib.pyplot as plt
 
 ## 1. NORMAS
 def norma(x,p):
-    x = np.array(x)
-    ac = 0
-    for i in range(x.size):
-        ac += x[i]**p
-    return ac**(1/p)
+    if p == 'inf':
+        r = abs(x[0])
+        for i in range(1,len(x)):
+            r = max(r, abs(x[i]))
+        return r
+    else:            
+        ac = 0
+        for i in range(len(x)):
+            ac += abs(x[i])**p
+        return ac**(1/p)
 
 def normaliza(X,p):
-    n = len(X)
-    m = len(X[0])
-    y = np.zeros((n, m))
-    for i in range(n):
-        y[i] = X[i]/norma(X[i], p)
+    y = []
+    for x in X:
+        y.append(x/norma(x, p))
     return y
 
-# ||(x,y)||_p = 1 -> x^p + y^p = 1^p -> y = +- (1 - x^p)^1/p 
-# p = [1,2,5,10,100,200]
-# x = np.linspace(-1, 1, 1000)
-# for i in range(len(p)):
-#     y = (1 - abs(x)**(p[i]))**(1/p[i])
-#     plt.plot(x,y)
-#     plt.plot(x,-y)
-# plt.show()
-
 def normaWithPInf(x,p):
-    if np.isposinf(p) == True:
+    if p == 'inf':
         r = abs(x[0])
         for i in range(1,len(x)):
             r = max(r, abs(x[i]))
@@ -58,30 +52,23 @@ def normaMatMC(A,q,p,Np):
         normaQdeAx = normaWithPInf(calcularAX(A,vNormalizado), q)
         if normaQdeAx > res:
             res = normaQdeAx
-            vector = v
+            vector = vNormalizado
 
     return [res, vector]
-
-print(normaMatMC(np.eye(2), 2, 1,1000))
-print(normaMatMC(np.eye(2), 1, 2,1000))
-print(normaMatMC(np.eye(2), 2, np.inf,1000))
-print(normaMatMC(np.eye(2), np.inf, 2,1000))
-print(normaMatMC(np.array([[0,-1],[1,0]]), 2, 2,1000))
-print(normaMatMC(np.array([[1,0],[0,0]]), 2, 2,1000))
-print(normaMatMC(np.array([[1,0],[0,0]]), np.inf, np.inf,1000))
-print(normaMatMC(np.array([[10,10],[0,0]]), 2, np.inf,1000))
 
 def normaExacta(A, p):
     # p = [1, inf]
     n, m = A.shape
-    res = -1
-    if np.isposinf(p) == True:
+    res = None
+    if p == 'inf':
+        res = 0
         for i in range(n):
             filaIesimaSum = 0
             for j in range(m):
                 filaIesimaSum += abs(A[i][j])
             res = max(res, filaIesimaSum)
     if p == 1:
+        res = 0
         for i in range(m):
             columnaIesimaSum = 0
             for j in range(n):
@@ -90,12 +77,13 @@ def normaExacta(A, p):
     return res
 
 # 3. Condicionamiento de Matrices
-def condMC(A,p):
+def condMC(A,p, numeroAlDope):
     # condA = ||A||p ||A^-1||p
-    c1 = normaMatMC(A, p, p, 1000)
+    c1 = normaMatMC(A, p, p, 10000)
     invA = np.linalg.inv(A) 
-    c2 = normaMatMC(invA, p, p, 1000)
-    return c1*c2
+    c2 = normaMatMC(invA, p, p, 10000)
+
+    return c1[0]*c2[0]
 
 def variaPerc(b, perc):
     n = len(b)
@@ -136,3 +124,12 @@ def buscarPeorVariacion(A, p, perc, NP):
     condA = condMC(A,p)
 
     return erroresB, erroresX, condA, maximoErrorX, bMax, bMonioMax
+
+def condExacta(A, p):
+  """
+  Que devuelve el numero de condicion de A a partir de la formula de la ecuacion (1) usando la norma p.
+  """
+  n,m = A.shape
+  invA = np.linalg.inv(A)
+  
+  return normaExacta(A, p) * normaExacta(invA, p)
