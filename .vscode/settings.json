@@ -1,0 +1,7 @@
+{
+    "editor.wordWrap": "on",
+    "editor.lineNumbers": "on",
+    "breadcrumbs.showNumbers": true,
+    "zenMode.hideLineNumbers": true,
+    "search.showLineNumbers": false
+}
